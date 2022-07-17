@@ -1,0 +1,25 @@
+ul{
+    list-style-type: none;
+}
+li{
+    list-style-type: none;
+}
+*{
+    padding:0;
+    margin: 0;
+}
+.sideBar-item{
+    margin-top: 10px;
+    padding:3px 3px
+}
+.sideBar-item:hover{
+    background: #E6E7EB ;
+}
+.sideBar-div{
+    display: flex;
+    height: 100%;
+    align-items: center;
+}
+.sideBar-item-link{
+    padding-left: 10px;
+}

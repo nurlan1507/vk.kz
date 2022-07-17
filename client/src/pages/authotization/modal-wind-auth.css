@@ -1,0 +1,76 @@
+.modal-main{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    position: fixed;
+    top:0;
+    left:0;
+    opacity:0;
+    transition: all 0.5s linear;
+    pointer-events: none;
+}
+.modal-main.active{
+    pointer-events: all;
+    opacity: 1;
+}
+.modal-content{
+    max-width: 500px;
+    padding:20px;
+    border-radius: 12px;
+    background-color: #FFFF;
+    height: fit-content;
+}
+.form-main{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.registerImg-container{
+    width: 100%;
+    display: flex;
+    height: fit-content;
+    justify-content: center;
+}
+/*.wrapper input::placeholder{*/
+/*    color:red;*/
+/*    font-size: 10px;*/
+/*}*/
+/*.wrapper input::-webkit-input-placeholder {color:#FF0000;}*/
+/*.wrapper input::-moz-placeholder {color:#FF0000;}*/
+/*.wrapper input:-moz-placeholder {color:#FF0000;}*/
+/*.wrapper input:-ms-input-placeholder {color:#FF0000;}*/
+
+.arrow {
+    border: solid black;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+}
+
+.right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+}
+
+.left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+}
+
+
+.confirm_modal{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: violet;
+    width:100%;
+    height: 250px;
+    margin:0 auto;
+    transition: all 0.5s ease-out;
+}
+
