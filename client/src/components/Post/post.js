@@ -10,30 +10,35 @@ import Axios from '../../api/requests'
 
 
 
-
-
-
-
-
-
-
 function InputField({avatar,status,setStatus}){
-    const postInfo = JSON.parse(localStorage.getItem('UserPost'))
-    console.log(postInfo)
-    const {postTextContent, postImages, postFiles, postAudio} = postInfo
-    useEffect(()=>{},[localStorage])
+    let postText = null
+    useEffect(()=>{
+        try{
+            const postInfo = JSON.parse(localStorage.getItem('UserPost'))
+            const {postTextContent, postImages, postFiles, postAudio} = postInfo
+            postText=postTextContent
+            console.log(postText)
+        }
+        catch (e){
+
+        }
+
+
+    },[status])
         return (
             <div className={'content'}>
                 <div className={'input-field'}>
                     <div className={'input-field-content'}>
                         <img src={avatar} className={'avatar'} alt={'avatar'}/>
-                        <input type={'text'} onClick={() => setStatus(true)} placeholder={(postTextContent ==='' || !postTextContent) ? 'Share your thoughts': postTextContent }
+                        <input type={'text'} onClick={() => setStatus(true)} placeholder={(postText ==='' || !postText) ? 'Share your thoughts': postText }
                                className={'input'}/>
                     </div>
                 </div>
             </div>
         )
     }
+
+
 const fileTypeRegex = /^image\/(gif|jpe?g|png)$|^application\/(csv|pdf|msword|(vnd\.(ms-|openxmlformats-).*))$|^text\/plain$/i
 const docsRegex = /^application\/(csv|pdf|msword|(vnd\.(ms-|openxmlformats-).*))$|^text\/plain$/i
 const imageTypeRegex = /image\/(png|jpg|jpeg)/gm
@@ -48,69 +53,61 @@ function ModalWindow({status,setStatus}){
     const [files , setFiles] = useState([])    // docs, pdf etc.
     const [audio , setAudio] = useState([])   //music
     const [mediaFilesPreview, setMediaFilesPreview] = useState([])  //images video gifs
-
-   const postInfo= JSON.parse(localStorage.getItem('UserPost'))
-    const {postImages} = postInfo
-    console.log(postImages)
     useEffect(()=>{
-        if(filesFiltrator.length){
-            filesFiltrator.forEach((media)=>{
-                console.log(media.type)
-                const reader = new FileReader()
-                reader.onloadend= ()=> {
-                    if (media.type.match(docsRegex)) {
-                        setFiles((old) => [...old, reader.result])
-                        filesFiltrator.shift()
+        try{
+            const postInfo = JSON.parse(localStorage.getItem('UserPost'))
+            const {postTextContent, postImages, postFiles, postAudio} = postInfo
+            setMediaFilesPreview((old)=>[...old,postImages])
+            setPostText(postTextContent)
+            if(filesFiltrator.length){
+                filesFiltrator.forEach((media)=>{
+                    console.log(media.type)
+                    const reader = new FileReader()
+                    reader.onloadend= ()=> {
+                        if (media.type.match(docsRegex)) {
+                            setFiles((old) => [...old, reader.result])
+                            filesFiltrator.shift()
+                        }
+                        if (media.type.match(imageTypeRegex)) {
+                            setMediaFilesPreview((old) => [...old, reader.result])
+                            filesFiltrator.shift()
+                        }
                     }
-                    if (media.type.match(imageTypeRegex)) {
-                        setMediaFilesPreview((old) => [...old, reader.result])
-                        filesFiltrator.shift()
-                    }
-                }
-                reader.readAsDataURL(media)
-            })
-            console.log(mediaFilesPreview)
-            localStorage.setItem('UserPost', JSON.stringify({
-                postTextContent:postText,
-                postImages: mediaFilesPreview,
-                postFiles:files,
-                postAudio:audio
-            }))
+                    reader.readAsDataURL(media)
+                })
+                console.log(mediaFilesPreview)
+            }
+        }
+        catch (e){
 
         }
 
-    },[filesFiltrator])
+
+    },[filesFiltrator,status])
 
 
-    // const changeHandler = (e)=>{
-    //     const {files} = e.target
-    //     console.log(files)
-    //     for(let i = 0; i < files.length; i++){
-    //         let file = files[i]
-    //         if(file.type.match(fileTypeRegex)){
-    //             setFilesFiltrator(old=>[...old, file])
-    //         }
-    //         else{
-    //             console.log('unsupported file mimetype')
-    //         }
-    //     }
-    //     e.target.files=[]
-    // }
 
 
-    function setImages(e){
-        Axios.uploadImage(e).then((res)=>{
-            console.log(res.data)
-        })
+    function closeModal(){
+        localStorage.setItem('UserPost', JSON.stringify({
+            postTextContent:postText,
+            postImages: mediaFilesPreview,
+            postFiles:files,
+            postAudio:audio
+        }))
+        setStatus(false);
+    }
+    function deleteImage(e){
+
     }
 
     return(
-        <div className={'modal-window-post'} onClick={()=>{setStatus(false)}}>
+        <div className={'modal-window-post'} onClick={()=>{closeModal()}}>
             <div className={'modal-window-content'} onClick={(e)=>e.stopPropagation()}>
                 <form>
                     <div className={'modal-window-header'}>
                         <div className={'createPost'}>Create post</div>
-                        <Button variant={'default'} onClick={()=>{setStatus(false)}}><FontAwesomeIcon icon={faXmark} style={{width:'25px',height:'25px'}}/></Button>
+                        <Button variant={'default'} onClick={()=>closeModal()}><FontAwesomeIcon icon={faXmark} style={{width:'25px',height:'25px'}}/></Button>
                     </div>
                     <div className={'modal-window-input'}>
                         <hr/>
@@ -119,24 +116,26 @@ function ModalWindow({status,setStatus}){
                                 as="textarea"
                                 placeholder="what are you thinking"
                                 style={{ height: '200px' }}
-                                onChange={(e)=>{setPostText(e.target.value);
-                                    console.log(postText)}}
+                                value={postText}
+                                onChange={(e)=>{setPostText(e.target.value)}}
                             />
                         </FloatingLabel>
                     </div>
                     <div className={'modal-window-post-status'}>
                         <div className={'images'}>
                             {
-                                postImages.length ?(
-                                    postImages.map((mediaBase64)=>{
-                                       return <img src={mediaBase64} alt={'sd'} style={{width:"300px"}}/>
+                                mediaFilesPreview.length ?(
+                                    mediaFilesPreview.map((mediaBase64)=>{
+                                       return <div style={{position:'relative',width:'fit-content'}}>
+                                           <button type={"button"} className={'cross'}><FontAwesomeIcon icon={faXmark} style={{color:"white"}}/></button>
+                                           <img src={mediaBase64} className={'image'}/>
+                                       </div>
                                     })
-                                ):<div>imags</div>
+                                ) :<div></div>
                             }
                         </div>
                         <div  className={'modal-window-post-tools'}>
                             <Form.Group controlId="formFile" className="mb-3">
-                                <Form.Label>upload image</Form.Label>
                                 <Form.Control type="file" onClick={(e)=>{e.target.files =null}} multiple  onChange={(e)=>{
                                     for(let i = 0 ; i < e.target.files.length; i++)
                                     setFilesFiltrator(old=>[...old, e.target.files[i]])

@@ -85,3 +85,36 @@ h1,h2,h4,h3,h5,h6{
     opacity: 0;
     position: absolute;
 }
+
+.images{
+    max-height: 270px;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
+    place-items: center;
+    padding: 10px 0;
+    grid-gap: 10px;
+}
+
+
+.image{
+    width: 100%;
+    height: 100%;
+}
+.image .hover{
+    opacity: 0  ;
+}
+
+.cross {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background-color: #767676;
+}
