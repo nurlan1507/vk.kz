@@ -1,5 +1,6 @@
 require('dotenv').config()
 const userModel = require('../models/user_model')
+const tokenModel = require('../models/token_model')
 const codeModel = require('../models/confirmation_code_model')
 const tokenService = require('../service/tokenService')
 
@@ -48,7 +49,6 @@ class userService {
             //если есть номер то валидируем его и отпрввляем смс
             if(number) {
                 if(numVerify(number).isValid() ===false ){
-                    console.log(numVerify(number).isValid())
                     return new Error('ввёденный телефон не валидный ')
                 }
                 //отправка смс
@@ -82,13 +82,11 @@ class userService {
             //далее здесь после нажатия на кнопку отправляется код для подтверждения на имейл
             await newUser.save()
             await this.sendMail(email,code)
-            const newUserDto = new userDto(newUser);
-
-           const tokens =  await tokenService.generateTokens({...newUserDto} );
-           await tokenService.saveToken(newUserDto.id, tokens.refreshToken)
 
 
-            return {tokens:tokens, user:newUserDto}
+
+           const tokens =  await tokenService.registerTokens({...newUser});
+            return {tokens:tokens, user:newUser}
         }
 
         async login(email,password){
@@ -101,36 +99,22 @@ class userService {
                 return new Error('Пользователя не существует')
             }
             const isMatch = await bcrypt.compare(password,user.password)
-            console.log(isMatch)
             if(!isMatch){
                 return new Error('Введён неверный пароль')
             }
-             const userDTO = new userDto(user);
-            const tokens = await tokenService.generateTokens({...userDTO});
-            await tokenService.saveToken(userDTO.id, tokens.refreshToken)
-            return {tokens:tokens, user:userDTO}
 
+
+            const tokens = await tokenService.loginTokens({...user})
+
+            return {tokens:tokens, user:user}
         }
+
+
         async logout(refreshToken){
             const token = await tokenService.removeToken(refreshToken);
             return token;
         }
             
-        async refresh(refreshToken){
-            if(!refreshToken){
-                return new Error('no token');
-            }
-            const userData =await  tokenService.validateRefreshToken(refreshToken);
-            const tokenFromDb = await tokenService.findToken(refreshToken);
-            if(!userData || !tokenFromDb){
-                return new Error("не авторизован")
-            }
-            const user = await userModel.findById(userData.id);
-            const userDTO = new userDto(user);
-            const tokens = await tokenService.generateTokens({...userDTO});
-            await tokenService.saveToken(userDTO.id, tokens.refreshToken)
-            return {tokens:tokens, user:userDTO}
-        }
 
 
 
@@ -179,6 +163,21 @@ class userService {
             else{
                 return false
             }
+        }
+
+        async refresh(refreshToken){
+            if(!refreshToken){
+                return new Error('unAuth')
+            }
+            const tokenObjectInDB = await tokenModel.findOne({refreshToken:refreshToken}).exec()
+            if(!tokenObjectInDB){
+                return new Error("unAuth")
+            }
+            const DBToken = tokenObjectInDB.refreshToken
+            const user = await userModel.findById(tokenObjectInDB.user)
+            console.log(user)
+            const newTokens = await tokenService.createNewTokens(user)
+            return newTokens
         }
 
 

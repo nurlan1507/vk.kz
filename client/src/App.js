@@ -12,6 +12,9 @@ const socket = io.connect("http://localhost:5000")
 
 
 
+
+
+
     export default function App(){
         const [avatar, setAvatar] = useState(null)
         const [userInfo, setUserInfo] = useState(null)

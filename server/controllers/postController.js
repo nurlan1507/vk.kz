@@ -7,9 +7,11 @@ class postController{
     async getPost(req,res,next){
 
     }
-    async createPost(req,res,next){
-
+    async createPost(req,res,next) {
+        console.log(req.images)
+        res.json(req.user)
     }
+
 
     async uploadMedia(req,res,next){
         const file = req.file

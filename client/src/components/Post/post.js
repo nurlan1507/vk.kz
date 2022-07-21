@@ -4,27 +4,15 @@ import Form from 'react-bootstrap/Form';
 import {Button} from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faImages,faMusic,faXmark } from '@fortawesome/free-solid-svg-icons'
+import UserService from "../../api/userService";
 import './post.css'
-import Axios from '../../api/requests'
+
 
 
 
 
 function InputField({avatar,status,setStatus}){
     let postText = null
-    useEffect(()=>{
-        try{
-            const postInfo = JSON.parse(localStorage.getItem('UserPost'))
-            const {postTextContent, postImages, postFiles, postAudio} = postInfo
-            postText=postTextContent
-            console.log(postText)
-        }
-        catch (e){
-
-        }
-
-
-    },[status])
         return (
             <div className={'content'}>
                 <div className={'input-field'}>
@@ -50,15 +38,13 @@ const imageTypeRegex = /image\/(png|jpg|jpeg)/gm
 function ModalWindow({status,setStatus}){
     const [postText, setPostText] = useState('')
     const [filesFiltrator ,setFilesFiltrator ] = useState([])  //all files of all types goes here and then distributed to special array
+    const [imagesToPush, setImagesToPush] = useState([]) //array of images that will be pushed to backend
     const [files , setFiles] = useState([])    // docs, pdf etc.
     const [audio , setAudio] = useState([])   //music
     const [mediaFilesPreview, setMediaFilesPreview] = useState([])  //images video gifs
     useEffect(()=>{
         try{
-            const postInfo = JSON.parse(localStorage.getItem('UserPost'))
-            const {postTextContent, postImages, postFiles, postAudio} = postInfo
-            setMediaFilesPreview((old)=>[...old,postImages])
-            setPostText(postTextContent)
+            console.log(filesFiltrator)
             if(filesFiltrator.length){
                 filesFiltrator.forEach((media)=>{
                     console.log(media.type)
@@ -70,6 +56,7 @@ function ModalWindow({status,setStatus}){
                         }
                         if (media.type.match(imageTypeRegex)) {
                             setMediaFilesPreview((old) => [...old, reader.result])
+                            setImagesToPush((old)=>[...old, media])
                             filesFiltrator.shift()
                         }
                     }
@@ -79,30 +66,29 @@ function ModalWindow({status,setStatus}){
             }
         }
         catch (e){
-
+            alert('error occured line 65')
         }
-
-
-    },[filesFiltrator,status])
+    },[filesFiltrator])
 
 
 
 
     function closeModal(){
-        localStorage.setItem('UserPost', JSON.stringify({
-            postTextContent:postText,
-            postImages: mediaFilesPreview,
-            postFiles:files,
-            postAudio:audio
-        }))
         setStatus(false);
     }
-    function deleteImage(e){
 
+    function deleteImage(index){
+        setMediaFilesPreview(mediaFilesPreview.filter(el=>el!==mediaFilesPreview[index]))
+    }
+        function createPost(){
+        const formData = new FormData()
+        formData.append('textContent', postText)
+        formData.append('images', imagesToPush)
+        const result = UserService.createPost(formData)
     }
 
     return(
-        <div className={'modal-window-post'} onClick={()=>{closeModal()}}>
+        <div className={'modal-window-post'}>
             <div className={'modal-window-content'} onClick={(e)=>e.stopPropagation()}>
                 <form>
                     <div className={'modal-window-header'}>
@@ -127,7 +113,7 @@ function ModalWindow({status,setStatus}){
                                 mediaFilesPreview.length ?(
                                     mediaFilesPreview.map((mediaBase64)=>{
                                        return <div style={{position:'relative',width:'fit-content'}}>
-                                           <button type={"button"} className={'cross'}><FontAwesomeIcon icon={faXmark} style={{color:"white"}}/></button>
+                                           <button onClick={(e)=>{deleteImage(mediaFilesPreview.indexOf(mediaBase64))}} type={"button"} className={'cross'}><FontAwesomeIcon icon={faXmark} style={{color:"white"}} /></button>
                                            <img src={mediaBase64} className={'image'}/>
                                        </div>
                                     })
@@ -136,7 +122,7 @@ function ModalWindow({status,setStatus}){
                         </div>
                         <div  className={'modal-window-post-tools'}>
                             <Form.Group controlId="formFile" className="mb-3">
-                                <Form.Control type="file" onClick={(e)=>{e.target.files =null}} multiple  onChange={(e)=>{
+                                <Form.Control type="file" id={'file'} onClick={(e)=>{e.target.files =null}} multiple  onChange={(e)=>{
                                     for(let i = 0 ; i < e.target.files.length; i++)
                                     setFilesFiltrator(old=>[...old, e.target.files[i]])
                                     e.target.files=[];
@@ -146,7 +132,8 @@ function ModalWindow({status,setStatus}){
                         </div>
                     </div>
                     <Button onClick={()=>{
-                        console.log('s')}} style={{background:'#E353D5',width:"100%"}}>Post</Button>
+                       createPost()
+                     }} style={{background:'#E353D5',width:"100%"}}>Post</Button>
                 </form>
             </div>
         </div>

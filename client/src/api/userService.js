@@ -5,7 +5,8 @@ import {Avatar} from "@mui/material";
 
 
 const api = axios.create({
-    baseURL:"http://localhost:5000/api"
+    baseURL:"http://localhost:5000/api",
+    headers:{"authorization":`Bearer ${localStorage.getItem('accessToken')}`}
 })
 
 function makeLetterAvatar(user,name){
@@ -14,11 +15,8 @@ function makeLetterAvatar(user,name){
 
 
 class userService{
-
     getUserData(){
         const data =  authControlle.getProfile()
-        console.log(data)
-        console.log(data)
         return axios({
             method: 'POST',
             url: 'http://localhost:5000/api/getUserData',
@@ -28,6 +26,14 @@ class userService{
             return res.data
         })
     }
+
+    createPost(data){
+        return api.post('/createPost',data, {
+                headers: { 'Content-Type': 'application/json' }
+            , withCredentials:true, }).then((res)=>{
+            console.log(res.data);return res.data})
+}
+
 }
 
 

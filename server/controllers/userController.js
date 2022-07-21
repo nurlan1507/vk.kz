@@ -7,29 +7,23 @@ const validation = require('express-validator');
 const e = require("express");
 
 
-//universal cookie
-const uniCookies = require('universal-cookie')
-const universalCookies = require('universal-cookie-express')
+
 
 
 class userController{
     async registration(req,res,next) {
         try {
             const {email,password,name,surname,number,birthday} = req.body
-            console.log(email,number)
             const userData = await userService.registration(email, password,name,surname,number,birthday)
-            console.log(userData)
             if(userData instanceof Error){
                 return res.json({msg: userData.message})
             }
             const accessToken = userData.tokens.accessToken
             const refreshToken = userData.tokens.refreshToken
-            console.log(accessToken,refreshToken)
             // req.universalCookies.set('accessToken', userData.tokens.accessToken,{path:'/',maxAge:"1800",httpOnly:true})
             // req.universalCookies.set('refreshToken', userData.tokens.accessToken,{path:'/',maxAge:"2592000",httpOnly:true})
             res.cookie('accessToken', accessToken, {maxAge:60*1000*15, httpOnly:true})
             res.cookie("refreshToken", refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
-            console.log(req.cookies)
             return res.json(userData)
         }catch (e){
         }
@@ -44,13 +38,9 @@ class userController{
             if(userData instanceof Error){
                 return res.json({msg:userData.message});
             }
-
-            // req.universalCookies.set('accessToken', userData.tokens.accessToken,{path:'/',maxAge:"1800",httpOnly:true})
-            // req.universalCookies.set('refreshToken', userData.tokens.accessToken,{path:'/',maxAge:"2592000",httpOnly:true})
-            console.log('LOLLLLLLLLLLLLLLL')
             res.cookie('accessToken', userData.tokens.accessToken, {maxAge:15*60*1000, httpOnly:true})
             res.cookie('refreshToken', userData.tokens.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
-            return res.json({msg:true, userData:userData})
+            return res.json({userData:userData})
         }catch (e){
 
         }
@@ -72,12 +62,13 @@ class userController{
     async refresh(req,res,next){
         try{
             const {refreshToken} = req.cookies
+            console.log(refreshToken)
             const userData = await userService.refresh(refreshToken);
             if(userData instanceof Error){
-                res.json(userData);
+                res.json(userData.message);
             }
             // req.universalCookies.set('refreshToken', userData.tokens.accessToken,{path:'/',maxAge:"2592000",httpOnly:true})
-            res.cookie('refreshToken', userData.tokens.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
             return res.json(userData)
         }catch (e){
         }
@@ -156,7 +147,7 @@ class userController{
         }
         console.log(tokens)
         console.log(req.cookies)
-        res.json(tokens)
+      return  res.json(req.user)
     }
 
 

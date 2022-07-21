@@ -1,8 +1,8 @@
 const tokenService = require('../service/tokenService')
 const userService = require('../service/userService')
 const ActiveUser = require('../session/activeUser')
-
-
+const jwt = require("jsonwebtoken");
+const UserModel = require('../models/user_model')
 // function parseCookies (request) {
 //     const list = {};
 //     const cookieHeader = request.headers?.cookie;
@@ -34,26 +34,25 @@ module.exports = async function (req,res,next) {
     // to the API (e.g. in case you use sessions)
     res.setHeader('Access-Control-Allow-Credentials', true);
 
-
-
     try {
-        const accessToken = req.cookies.accessToken;
-        const refreshToken = req.cookies.refreshToken;
-        console.log(req.cookies)
-        console.log(accessToken)
-        console.log("LOLOL")
+        var accessToken = req.cookies.accessToken;
+        var refreshToken = req.cookies.refreshToken;
         const userData = await tokenService.validateAccessToken(accessToken);
         if(!userData){
             if(refreshToken){
-                req.newTokens = await userService.refresh(refreshToken)
-                res.cookie('refreshToken', req.newTokens.tokens.refreshToken,{maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true} )
-                res.cookie('accessToken', req.newTokens.tokens.accessToken,{maxAge: 60*15* 1000, httpOnly: true} )
-                req.token = req.newTokens.tokens.accessToken
+                const newTokens = await userService.refresh(refreshToken)
+                accessToken= newTokens.accessToken;
+                refreshToken=newTokens.refreshToken
+                const newUserData = await tokenService.validateAccessToken(accessToken);
+                res.cookie('refreshToken',accessToken,{maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true} )
+                res.cookie('accessToken', refreshToken,{maxAge: 60*15* 1000, httpOnly: true} )
             }
             else{
                 return res.json({msg:"unAuth"})
             }
         }
+
+        req.user = userData
         return next();
     }
     catch (e) {
